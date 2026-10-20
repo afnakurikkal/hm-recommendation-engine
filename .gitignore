@@ -1,0 +1,22 @@
+# Data files (these stay in Google Drive, never in git)
+*.csv
+*.zip
+*.parquet
+data/
+
+# Secrets
+kaggle.json
+.kaggle/
+.env
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+.venv/
+
+# Editor / OS
+.vscode/
+Thumbs.db
+.DS_Store
