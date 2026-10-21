@@ -1,7 +1,7 @@
 """Week 4, Days 4-5: Apache Airflow DAGs for the H&M recommendation pipeline.
 
 hm_weekly_retraining (every Sunday 02:00)
-    build_features -> train_two_tower -> build_ann_index -> load_feature_store -> reload_api -> api_smoke_test
+    build_features -> train_two_tower -> tune_ranking -> build_ann_index -> load_feature_store -> reload_api -> api_smoke_test
 
 hm_daily_embedding_refresh (every day 03:00)
     build_features -> refresh_item_embeddings -> build_ann_index -> load_feature_store -> reload_api
@@ -53,12 +53,14 @@ with DAG(
                                   env=ENV, execution_timeout=timedelta(hours=2))
     train_model = BashOperator(task_id="train_two_tower", bash_command=step("src.training.train_two_tower"),
                                env=ENV, execution_timeout=timedelta(hours=3))
+    tune_ranking = BashOperator(task_id="tune_ranking", bash_command=step("src.training.tune_ranking"),
+                                env=ENV, execution_timeout=timedelta(hours=1))
     build_index = BashOperator(task_id="build_ann_index", bash_command=step("src.serving.ann_search"), env=ENV)
     load_store = BashOperator(task_id="load_feature_store", bash_command=step("src.serving.load_redis"), env=ENV)
     reload_api = BashOperator(task_id="reload_api", bash_command=f"curl -sf -X POST {API_URL}/admin/reload")
     smoke_test = BashOperator(task_id="api_smoke_test", bash_command=f"curl -sf {API_URL}/health")
 
-    build_features >> train_model >> build_index >> load_store >> reload_api >> smoke_test
+    build_features >> train_model >> tune_ranking >> build_index >> load_store >> reload_api >> smoke_test
 
 with DAG(
     dag_id="hm_daily_embedding_refresh",

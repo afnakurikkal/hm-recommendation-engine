@@ -1,0 +1,42 @@
+# Redis feature store + feature loader + recommendation API.
+#
+#   docker compose up -d redis                        # only Redis (run the Python steps on your machine)
+#   docker compose --profile full up -d --build       # Redis + load features + API on http://localhost:8000
+#
+# Needs the processed data and the trained model in ./data/hm_project (python scripts/run_pipeline.py).
+# Product photos: set HM_IMAGES_ZIP to the Kaggle zip before `docker compose up` (optional).
+services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory-policy", "noeviction"]
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+
+  loader:
+    build: .
+    command: ["python", "-m", "src.serving.load_redis"]
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      HM_MAX_USERS: ${HM_MAX_USERS:-0}
+    volumes:
+      - ./data:/app/data:ro
+    depends_on:
+      redis: {condition: service_healthy}
+    profiles: ["full"]
+
+  api:
+    build: .
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      HM_IMAGES: ${HM_IMAGES_ZIP:+/images/kaggle.zip}
+    ports: ["8000:8000"]
+    volumes:
+      - ./data:/app/data:ro
+      - ${HM_IMAGES_ZIP:-./data}:/images/kaggle.zip:ro
+    depends_on:
+      redis: {condition: service_healthy}
+      loader: {condition: service_completed_successfully}
+    profiles: ["full"]

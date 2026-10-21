@@ -1,0 +1,14 @@
+.git
+.venv
+venv
+data
+notebooks
+artifacts
+tests
+scripts
+dags
+**/__pycache__
+*.zip
+*.parquet
+*.npy
+*.h5

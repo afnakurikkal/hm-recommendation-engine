@@ -1,0 +1,40 @@
+{
+  "trained_at": "2026-11-26 10:45:35",
+  "training_minutes": 36.6,
+  "cutoff": "2020-09-16",
+  "train_weeks": 12,
+  "train_interactions": 3107852,
+  "val_interactions": 230980,
+  "test_customers": 68984,
+  "n_users": 1371980,
+  "n_items": 105542,
+  "embedding_dim": 64,
+  "batch_size": 4096,
+  "learning_rate": 0.002,
+  "temperature": 0.05,
+  "epochs_run": 4,
+  "best_epoch": 3,
+  "best_val_loss": 9.697724342346191,
+  "test_metrics": {
+    "two_tower_model": {
+      "Recall@12": 0.044564381374914114,
+      "NDCG@12": 0.0330199417934547,
+      "MAP@12": 0.02345981361951829
+    },
+    "two_tower_retrieval_only": {
+      "Recall@12": 0.015617495879294764,
+      "NDCG@12": 0.009631322986954845,
+      "MAP@12": 0.005370349597435723
+    },
+    "repurchase_plus_popularity": {
+      "Recall@12": 0.047892672467933585,
+      "NDCG@12": 0.03495608764189618,
+      "MAP@12": 0.02443376209340512
+    },
+    "popularity_baseline": {
+      "Recall@12": 0.0193215469061964,
+      "NDCG@12": 0.01114602269188522,
+      "MAP@12": 0.005482307374332665
+    }
+  }
+}

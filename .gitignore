@@ -30,3 +30,8 @@ venv/
 .vscode/
 Thumbs.db
 .DS_Store
+
+# Local pipeline temp files
+*.tmp
+.duckdb_tmp/
+.pytest_cache/

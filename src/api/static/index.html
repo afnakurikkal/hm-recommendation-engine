@@ -3,100 +3,238 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>H&amp;M Recommendations</title>
+<title>H&amp;M Recommendation Engine</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23e50010'/><text x='16' y='21' font-size='12' font-family='Arial' font-weight='700' fill='white' text-anchor='middle'>H%26M</text></svg>">
 <style>
   :root {
-    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1f; --muted: #6b6b70; --line: #e4e2dc;
-    --accent: #cc0000; --accent-ink: #ffffff; --ok: #1f7a4d; --warn: #a15c00; --chip: #f0eee9;
+    --bg: #f7f6f3; --panel: #ffffff; --panel-2: #fbfaf8; --ink: #17171a; --muted: #6c6b70; --line: #e6e3dd;
+    --accent: #e50010; --accent-soft: #fde8ea; --ok: #18794e; --ok-soft: #e4f4ec; --warn: #9a5b00; --warn-soft: #fff2dc;
+    --chip: #f1efea; --shadow: 0 1px 2px rgba(20,20,20,.04), 0 6px 20px rgba(20,20,20,.05); --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111113; --panel: #1a1a1d; --panel-2: #202024; --ink: #f0eff2; --muted: #a2a1a8; --line: #2c2c31;
+            --accent: #ff3b47; --accent-soft: #3a1518; --ok: #4cc38a; --ok-soft: #12291e; --warn: #f0b050; --warn-soft: #2e230f;
+            --chip: #26262b; --shadow: none; }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink);
-         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  header { background: var(--panel); border-bottom: 1px solid var(--line); }
-  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
-  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; flex-wrap: wrap; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
-  .logo { background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 3px 8px; font-weight: 800; letter-spacing: .5px; }
-  .status { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
-  .pill { background: var(--chip); border-radius: 999px; padding: 4px 10px; color: var(--muted); }
-  .pill.ok { color: var(--ok); } .pill.bad { color: var(--accent); }
-  main { padding: 24px 0 48px; }
-  h1 { font-size: 26px; margin: 0 0 4px; }
-  .sub { color: var(--muted); margin: 0 0 20px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
-  form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  input[type=text] { flex: 1 1 360px; min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
-  select { padding: 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: #fff; }
-  button { cursor: pointer; border: 0; border-radius: 8px; padding: 11px 16px; font: inherit; font-weight: 600; }
-  .primary { background: var(--accent); color: var(--accent-ink); }
-  .ghost { background: var(--chip); color: var(--ink); font-weight: 500; padding: 7px 12px; font-size: 13px; }
-  .samples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; color: var(--muted); font-size: 13px; }
-  .result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin: 24px 0 12px; }
-  .result-head h2 { margin: 0; font-size: 19px; }
-  .meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
-  .badge { border-radius: 6px; padding: 3px 8px; font-weight: 600; font-size: 12px; }
-  .badge.model { background: #e7f3ec; color: var(--ok); }
-  .badge.fallback { background: #fff1de; color: var(--warn); }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
-  .swatch { height: 64px; border-radius: 8px; border: 1px solid var(--line); display: flex; align-items: flex-end; justify-content: space-between; padding: 6px 8px; }
-  .rank { background: rgba(255,255,255,.9); border-radius: 6px; padding: 1px 7px; font-weight: 700; font-size: 12px; }
-  .ptype { font-weight: 700; }
-  .small { color: var(--muted); font-size: 13px; }
-  .aid { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--muted); }
-  .item button { margin-top: auto; }
-  .empty, .error { color: var(--muted); padding: 24px; text-align: center; }
-  .error { color: var(--accent); }
-  .how { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
-  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; }
-  .step b { display: block; margin-bottom: 2px; font-size: 14px; }
-  footer { color: var(--muted); font-size: 13px; padding: 24px 0; border-top: 1px solid var(--line); }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   a { color: var(--accent); }
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+  header { background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 17px; }
+  .logo { background: var(--accent); color: #fff; border-radius: 8px; padding: 4px 9px; font-weight: 800; letter-spacing: .5px; font-size: 15px; }
+  .brand small { display: block; font-weight: 500; color: var(--muted); font-size: 12px; }
+  nav.tabs { display: flex; gap: 4px; }
+  nav.tabs button { background: none; border: 0; padding: 8px 14px; border-radius: 999px; font: inherit; font-weight: 600; color: var(--muted); cursor: pointer; }
+  nav.tabs button.active { background: var(--ink); color: var(--panel); }
+  .status { display: flex; gap: 6px; flex-wrap: wrap; font-size: 12px; }
+  .pill { background: var(--chip); border-radius: 999px; padding: 3px 10px; color: var(--muted); white-space: nowrap; }
+  .pill.ok { color: var(--ok); background: var(--ok-soft); } .pill.bad { color: var(--accent); background: var(--accent-soft); }
+  main { padding: 28px 0 56px; }
+  .hero h1 { font-size: clamp(24px, 3.4vw, 34px); line-height: 1.15; margin: 0 0 6px; letter-spacing: -.5px; }
+  .hero p { color: var(--muted); margin: 0 0 20px; max-width: 760px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .search { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; align-items: end; }
+  label.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); font-weight: 600; }
+  input, select { padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: var(--panel-2); color: var(--ink); min-width: 0; }
+  input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  button { cursor: pointer; border: 0; border-radius: 10px; padding: 11px 18px; font: inherit; font-weight: 650; }
+  .primary { background: var(--accent); color: #fff; } .primary:hover { filter: brightness(.95); }
+  .ghost { background: var(--chip); color: var(--ink); font-weight: 550; padding: 7px 12px; font-size: 13px; }
+  .ghost:hover { background: var(--line); }
+  .ghost.on { background: var(--ink); color: var(--panel); }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 14px; font-size: 13px; color: var(--muted); }
+  .row .sep { width: 1px; height: 22px; background: var(--line); margin: 0 6px; }
+  .toggle { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  .mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; color: var(--muted); word-break: break-all; }
+  section.block { margin-top: 26px; }
+  .block-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+  .block-head h2 { margin: 0; font-size: 19px; letter-spacing: -.2px; }
+  .block-head .sub { color: var(--muted); font-size: 13px; }
+  .profile { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; }
+  .avatar { width: 54px; height: 54px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-weight: 800; font-size: 20px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .badge { border-radius: 8px; padding: 4px 9px; font-weight: 700; font-size: 12px; display: inline-block; }
+  .badge.model { background: var(--ok-soft); color: var(--ok); } .badge.fallback { background: var(--warn-soft); color: var(--warn); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+  .strip { display: grid; grid-auto-flow: column; grid-auto-columns: 132px; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .15s ease; }
+  .item:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(20,20,20,.10); }
+  .photo { position: relative; aspect-ratio: 3 / 4; background: var(--chip); display: grid; place-items: center; overflow: hidden; }
+  .photo img { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: cover; background: #fff; }
+  .photo .rank, .photo .dot, .photo .again { z-index: 2; }
+  .photo .swatch { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; font-size: 28px; color: rgba(255,255,255,.85); text-shadow: 0 1px 6px rgba(0,0,0,.25); }
+  .rank { position: absolute; top: 8px; left: 8px; background: rgba(255,255,255,.94); color: #111; border-radius: 7px; padding: 1px 7px; font-weight: 800; font-size: 12px; }
+  .again { position: absolute; bottom: 8px; left: 8px; background: var(--ink); color: var(--panel); border-radius: 7px; padding: 2px 8px; font-weight: 700; font-size: 11px; }
+  .dot { position: absolute; top: 8px; right: 8px; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+  .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .name { font-weight: 700; font-size: 14px; line-height: 1.3; }
+  .small { color: var(--muted); font-size: 12.5px; }
+  .match { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+  .bar { flex: 1; height: 5px; background: var(--chip); border-radius: 9px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 9px; }
+  .item .actions { padding: 0 12px 12px; }
+  .item .actions button { width: 100%; }
+  .strip .item .body { padding: 8px; } .strip .name { font-size: 12.5px; }
+  .empty, .error, .loading { color: var(--muted); padding: 28px; text-align: center; border: 1px dashed var(--line); border-radius: var(--radius); }
+  .error { color: var(--accent); border-color: var(--accent); }
+  .banner { background: var(--warn-soft); color: var(--warn); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 18px; display: none; }
+  .banner code { background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 5px; }
+  .skeleton { background: linear-gradient(90deg, var(--chip) 25%, var(--line) 37%, var(--chip) 63%); background-size: 400% 100%; animation: sk 1.2s ease infinite; }
+  @keyframes sk { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+  .view { display: none; } .view.active { display: block; }
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .metric .val { font-size: 30px; font-weight: 800; letter-spacing: -.5px; }
+  .metric .cmp { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .metric .cmp div { display: grid; grid-template-columns: 74px 1fr 56px; gap: 8px; align-items: center; }
+  .lift { color: var(--ok); font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .4px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; counter-reset: s; }
+  .step { position: relative; padding-top: 22px; }
+  .step .wk { position: absolute; top: -10px; left: 16px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 999px; }
+  .step h3 { margin: 0 0 6px; font-size: 15px; }
+  .step ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; }
+  .flow { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
+  .flow .node { flex: 1 1 150px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 13px; }
+  .flow .node b { display: block; font-size: 14px; margin-bottom: 2px; }
+  .flow .arrow { align-self: center; color: var(--muted); font-size: 20px; }
+  dialog { border: 0; border-radius: 18px; padding: 0; width: min(1000px, 94vw); max-height: 90vh; background: var(--bg); color: var(--ink); box-shadow: 0 30px 80px rgba(0,0,0,.35); }
+  dialog::backdrop { background: rgba(10,10,12,.55); }
+  .dlg-head { display: flex; gap: 16px; padding: 18px; background: var(--panel); border-bottom: 1px solid var(--line); align-items: flex-start; }
+  .dlg-head .photo { width: 120px; flex: none; border-radius: 12px; }
+  .dlg-body { padding: 18px; overflow: auto; max-height: calc(90vh - 190px); }
+  .close { margin-left: auto; }
+  footer { color: var(--muted); font-size: 13px; padding: 22px 0 40px; border-top: 1px solid var(--line); }
+  footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  @media (max-width: 760px) {
+    .search { grid-template-columns: 1fr 1fr; } .search .grow { grid-column: 1 / -1; } .search button { grid-column: 1 / -1; }
+    .profile { grid-template-columns: auto 1fr; } .profile .right { grid-column: 1 / -1; }
+    .two { grid-template-columns: 1fr; } .flow .arrow { display: none; }
+    nav.tabs { order: 3; width: 100%; overflow-x: auto; }
+  }
 </style>
 </head>
 <body>
 <header>
   <div class="wrap top">
-    <div class="brand"><span class="logo">H&amp;M</span> Context-Aware Recommendation Engine</div>
+    <div class="brand"><span class="logo">H&amp;M</span><div>Recommendation Engine<small>Context-aware two-tower neural network</small></div></div>
+    <nav class="tabs" id="tabs">
+      <button class="active" data-view="recommend">Recommend</button>
+      <button data-view="model">Model &amp; metrics</button>
+      <button data-view="how">How it works</button>
+    </nav>
     <div class="status" id="status"><span class="pill">Connecting…</span></div>
   </div>
 </header>
 
 <main class="wrap">
-  <h1>Personalized fashion recommendations</h1>
-  <p class="sub">Two-tower neural network · Redis feature store · FAISS approximate nearest-neighbour search · FastAPI</p>
+  <div class="banner" id="banner"></div>
 
-  <div class="card">
-    <form id="form">
-      <input id="customer" type="text" placeholder="Enter a customer ID" autocomplete="off" required>
-      <select id="k" aria-label="Number of recommendations">
-        <option value="6">Top 6</option><option value="12" selected>Top 12</option><option value="24">Top 24</option>
-      </select>
-      <button class="primary" type="submit">Recommend</button>
-    </form>
-    <div class="samples">Try:
-      <button class="ghost" type="button" data-sample="existing">Existing customer</button>
-      <button class="ghost" type="button" data-sample="new">New customer (no purchases)</button>
-      <button class="ghost" type="button" data-sample="unknown">Unknown customer</button>
+  <!-- ===================================================== RECOMMEND -->
+  <div class="view active" id="view-recommend">
+    <div class="hero">
+      <h1>Personalised fashion recommendations</h1>
+      <p>Pick a customer and a shopping date. The query tower turns the customer's profile, purchase behaviour and the
+        date (month, day of week) into a vector, and FAISS finds the closest of <span id="n-items">105,542</span> articles in milliseconds.</p>
     </div>
+
+    <div class="card">
+      <form class="search" id="form">
+        <label class="field grow">Customer ID
+          <input id="customer" type="text" placeholder="Paste an H&amp;M customer_id or pick an example below" autocomplete="off" required>
+        </label>
+        <label class="field">Shopping date (context)
+          <input id="date" type="date" min="2018-09-20" max="2021-12-31">
+        </label>
+        <label class="field">Results
+          <select id="k"><option value="8">Top 8</option><option value="12" selected>Top 12</option><option value="24">Top 24</option><option value="48">Top 48</option></select>
+        </label>
+        <button class="primary" type="submit">Recommend</button>
+      </form>
+      <div class="row">
+        <span>Customers:</span>
+        <button class="ghost" type="button" data-sample="existing">Loyal customer</button>
+        <button class="ghost" type="button" data-sample="random">Another customer</button>
+        <button class="ghost" type="button" data-sample="new">New customer (no purchases)</button>
+        <button class="ghost" type="button" data-sample="unknown">Unknown visitor</button>
+        <span class="sep"></span>
+        <span>Season:</span>
+        <button class="ghost season" type="button" data-date="">Dataset end (Sep)</button>
+        <button class="ghost season" type="button" data-date="2020-12-19">Christmas</button>
+        <button class="ghost season" type="button" data-date="2020-07-04">Summer</button>
+        <button class="ghost season" type="button" data-date="2020-03-14">Spring</button>
+        <span class="sep"></span>
+        <label class="toggle"><input type="checkbox" id="exclude"> Hide recently bought</label>
+      </div>
+    </div>
+
+    <section class="block" id="profile"></section>
+    <section class="block" id="history"></section>
+    <section class="block" id="results">
+      <div class="empty">Choose a customer above to see their recommendations.</div>
+    </section>
   </div>
 
-  <section id="results"></section>
-  <section id="similar"></section>
+  <!-- ===================================================== MODEL -->
+  <div class="view" id="view-model">
+    <div class="hero">
+      <h1>Model &amp; offline evaluation</h1>
+      <p>Evaluated on the held-out last week of the dataset against the full article catalogue, compared with a
+        "most popular in the last 28 days" baseline (the classic strong baseline for H&amp;M).</p>
+    </div>
+    <div id="model-content"><div class="loading">Loading model information…</div></div>
+  </div>
 
-  <div class="how">
-    <div class="step"><b>1 · Feature store</b>Customer profile and purchase features are read from Redis.</div>
-    <div class="step"><b>2 · Query tower</b>The neural network turns them, plus month and day of week, into a customer vector.</div>
-    <div class="step"><b>3 · ANN search</b>FAISS HNSW finds the closest of 105,542 article vectors.</div>
-    <div class="step"><b>4 · Cold start</b>Unknown customers get the most popular articles.</div>
+  <!-- ===================================================== HOW -->
+  <div class="view" id="view-how">
+    <div class="hero">
+      <h1>How it works</h1>
+      <p>An offline pipeline (Spark → TensorFlow → FAISS → Redis, scheduled by Airflow) feeds an online FastAPI service.</p>
+    </div>
+    <div class="card">
+      <div class="block-head"><h2>Online request path</h2><span class="sub">GET /recommend/{customer_id}</span></div>
+      <div class="flow">
+        <div class="node"><b>1 · Feature store</b>Profile + purchase features read from Redis (sub-millisecond).</div>
+        <div class="arrow">→</div>
+        <div class="node"><b>2 · Query tower</b>TensorFlow network: customer + month + day of week → 64-d vector.</div>
+        <div class="arrow">→</div>
+        <div class="node"><b>3 · ANN search</b>FAISS HNSW over pre-computed article vectors (cosine similarity).</div>
+        <div class="arrow">→</div>
+        <div class="node"><b>4 · Enrich</b>Article details from Redis. Unknown visitors get trending items.</div>
+      </div>
+    </div>
+    <section class="block steps">
+      <div class="card step"><span class="wk">WEEK 1</span><h3>Data processing &amp; features</h3>
+        <ul><li>31.8M transactions processed with PySpark</li><li>Missing values, cold-start users / items</li><li>Context: month, day of week, recency</li><li>Popularity over 7 / 28 days / all time</li><li>Vocabularies for the embeddings</li></ul></div>
+      <div class="card step"><span class="wk">WEEK 2</span><h3>Two-tower model</h3>
+        <ul><li>Query tower: customer ID, club, news, age, purchase stats, context</li><li>Candidate tower: article ID, type, colour, department, garment, popularity</li><li>In-batch negative sampling + logQ correction</li><li>Recall@K, NDCG@K, MAP@12 vs baseline</li></ul></div>
+      <div class="card step"><span class="wk">WEEK 3</span><h3>Serving &amp; feature store</h3>
+        <ul><li>Article vectors and tower weights exported</li><li>Redis: user features, item vectors, fallback</li><li>FAISS HNSW approximate nearest neighbours</li><li>Recall of ANN vs exact search measured</li></ul></div>
+      <div class="card step"><span class="wk">WEEK 4</span><h3>API, pipelines &amp; load test</h3>
+        <ul><li>FastAPI microservice + this web UI</li><li>Airflow: weekly retraining, daily embedding refresh</li><li>Concurrent stress test (p50 / p95 / p99)</li><li>Docker Compose deployment</li></ul></div>
+    </section>
+    <section class="block card">
+      <div class="block-head"><h2>Live service latency</h2><span class="sub">measured by the API since start-up</span></div>
+      <div id="stats"><div class="small">No requests yet.</div></div>
+    </section>
   </div>
 </main>
 
-<footer class="wrap">Backend API: <a href="docs" target="_blank">interactive API docs</a> · <a href="health" target="_blank">health</a></footer>
+<footer><div class="wrap">
+  <span>H&amp;M Personalized Fashion Recommendations dataset (Kaggle) · TensorFlow · FAISS · Redis · FastAPI · Airflow</span>
+  <span><a href="docs" target="_blank">API docs</a> · <a href="health" target="_blank">Health</a> · <a href="model" target="_blank">Model JSON</a></span>
+</div></footer>
+
+<dialog id="dlg"><div id="dlg-content"></div></dialog>
 
 <script>
 const COLOURS = {
-  "Black": "#1b1b1b", "White": "#fafafa", "Off White": "#f3efe6", "Light Beige": "#e9dcc6", "Beige": "#d8c3a0",
+  "Black": "#1b1b1b", "White": "#f4f4f2", "Off White": "#efe9dc", "Light Beige": "#e9dcc6", "Beige": "#d8c3a0",
   "Dark Beige": "#b59a72", "Grey": "#9a9a9a", "Light Grey": "#cfcfcf", "Dark Grey": "#4a4a4a", "Greyish Beige": "#bdb3a2",
   "Blue": "#2f62c9", "Light Blue": "#9cc3ea", "Dark Blue": "#1d2f5c", "Other Blue": "#4c74b3", "Turquoise": "#2fb3b3",
   "Dark Turquoise": "#1c7c7c", "Light Turquoise": "#9fe0dc", "Green": "#3d8b46", "Dark Green": "#1f4d2b", "Light Green": "#a8d5a2",
@@ -105,87 +243,236 @@ const COLOURS = {
   "Orange": "#ef7d22", "Dark Orange": "#b3561a", "Light Orange": "#f7b779", "Yellow": "#f2cf2b", "Dark Yellow": "#c9a21b",
   "Light Yellow": "#f8eaa0", "Mole": "#6e6157", "Brown": "#6b4329", "Yellowish Brown": "#9b6b2f", "Purple": "#6c3d8f",
   "Dark Purple": "#43245c", "Light Purple": "#c3a7dc", "Lilac Purple": "#b38fd0", "Gold": "#c9a24b", "Silver": "#c0c0c0",
-  "Bronze/Copper": "#a8683a", "Metal": "#8e9196", "Transparent": "#eef3f6", "Light Orange ": "#f7b779"
+  "Bronze/Copper": "#a8683a", "Metal": "#8e9196", "Transparent": "#dfe8ee", "Other": "#b0aca4", "Other Red": "#d0464f",
+  "Other Orange": "#e8913f", "Other Yellow": "#e2c446", "Other Green": "#5c9a5f", "Other Turquoise": "#3fa7a5", "Other Purple": "#8a5aa8"
 };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let samples = null;
+const fmt = (n, d = 4) => (n == null ? "–" : Number(n).toFixed(d));
+const state = { samples: null, randomIndex: 0, date: "", health: null };
 
-async function getJSON(path) {
-  const res = await fetch(path);
-  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
-  return res.json();
+async function getJSON(path, opts) {
+  const res = await fetch(path, opts);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail ? (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail)) : res.statusText);
+  return body;
 }
 
-function itemCard(item, rank, withSimilar) {
-  const colour = COLOURS[item.colour_group_name] || "#d9d6cf";
-  return `<div class="item">
-    <div class="swatch" style="background:${colour}"><span class="rank">#${rank}</span></div>
-    <div class="ptype">${esc(item.product_type_name || "Article")}</div>
-    <div class="small">${esc(item.colour_group_name)} · ${esc(item.department_name)}</div>
-    <div class="small">${esc(item.garment_group_name)}</div>
-    <div class="aid">Article ${esc(item.article_id)}</div>
-    ${withSimilar ? `<button class="ghost" type="button" data-similar="${esc(item.article_id)}">Similar items</button>` : ""}
-  </div>`;
+function photo(item, rank) {
+  const colour = COLOURS[item.colour_group_name] || "#c9c5bc";
+  const initial = esc((item.product_type_name || "?").slice(0, 1));
+  const img = item.image_url ? `<img loading="lazy" alt="${esc(item.prod_name || item.product_type_name)}" src="${esc(item.image_url.replace(/^\//, ""))}" onerror="this.remove()">` : "";
+  return `<div class="photo"><div class="swatch" style="background:${colour}">${initial}</div>${img}
+    ${rank ? `<span class="rank">#${rank}</span>` : ""}${item.reason === "bought_recently" ? `<span class="again">Buy again</span>` : ""}<span class="dot" title="${esc(item.colour_group_name)}" style="background:${colour}"></span></div>`;
+}
+
+function card(item, rank, opts = {}) {
+  const pct = item.score != null ? Math.max(0, Math.min(100, Math.round((item.score + 1) * 50))) : null;
+  return `<article class="item">
+    ${photo(item, rank)}
+    <div class="body">
+      <div class="name">${esc(item.prod_name || item.product_type_name || "Article")}</div>
+      <div class="small">${esc(item.product_type_name)} · ${esc(item.colour_group_name)}</div>
+      ${opts.compact ? "" : `<div class="small">${esc(item.department_name)}${item.index_name ? " · " + esc(item.index_name) : ""}</div>
+      <div class="small">${item.purchases_last_28d ? item.purchases_last_28d.toLocaleString() + " sold in last 28 days" : "New / rarely bought"}</div>`}
+      ${pct != null && !opts.compact && item.reason !== "bought_recently" ? `<div class="match" title="cosine similarity ${fmt(item.score, 3)}"><span>Match</span><span class="bar"><i style="width:${pct}%"></i></span><span>${fmt(item.score, 2)}</span></div>` : ""}
+    </div>
+    ${opts.similar ? `<div class="actions"><button class="ghost" type="button" data-similar="${esc(item.article_id)}">Similar items</button></div>` : ""}
+  </article>`;
+}
+
+function skeletonGrid(n) {
+  return `<div class="grid">${Array.from({length: n}, () => `<div class="item"><div class="photo skeleton"></div><div class="body"><div class="skeleton" style="height:12px;border-radius:6px"></div><div class="skeleton" style="height:10px;width:60%;border-radius:6px;margin-top:6px"></div></div></div>`).join("")}</div>`;
 }
 
 async function recommend(customerId) {
+  if (!customerId) return;
   const k = $("k").value;
-  $("similar").innerHTML = "";
-  $("results").innerHTML = `<div class="empty">Finding recommendations…</div>`;
+  const params = new URLSearchParams({ k });
+  if (state.date) params.set("date", state.date);
+  if ($("exclude").checked) params.set("exclude_purchased", "true");
+  $("results").innerHTML = `<div class="block-head"><h2>Finding recommendations…</h2></div>` + skeletonGrid(Math.min(+k, 12));
+  $("profile").innerHTML = ""; $("history").innerHTML = "";
+  history.replaceState(null, "", `?customer=${encodeURIComponent(customerId)}${state.date ? "&date=" + state.date : ""}`);
   try {
-    const data = await getJSON(`recommend/${encodeURIComponent(customerId)}?k=${k}`);
+    const [data, cust] = await Promise.all([
+      getJSON(`recommend/${encodeURIComponent(customerId)}?${params}`),
+      getJSON(`customers/${encodeURIComponent(customerId)}`).catch(() => null),
+    ]);
+    renderProfile(data, cust);
+    renderHistory(cust);
     const isModel = data.source === "two_tower_model";
-    const c = data.customer;
-    const profile = c ? `<span class="pill">Age ${c.age}</span><span class="pill">${esc(c.club_member_status)}</span>
-        <span class="pill">${c.n_purchases} past purchases</span>${c.is_new_customer ? '<span class="pill">New customer</span>' : ""}` : "";
     $("results").innerHTML = `
-      <div class="result-head">
-        <div><h2>Recommended for this customer</h2><div class="aid">${esc(customerId)}</div></div>
-        <div class="meta">
-          <span class="badge ${isModel ? "model" : "fallback"}">${isModel ? "Two-tower model" : "Popular items (cold start)"}</span>
-          ${profile}<span class="pill">${data.latency_ms} ms</span>
-        </div>
+      <div class="block-head">
+        <div><h2>${isModel ? "Recommended for this customer" : "Trending now (cold start)"}</h2>
+          <div class="sub">${isModel ? (data.recommendations.some((r) => r.reason === "bought_recently") ? "“Buy again” picks from the last weeks, then the two-tower model's top articles (FAISS HNSW)" : "Two-tower model · FAISS HNSW search · match = cosine similarity") :"Customer not in the feature store, so the most popular articles of the last 28 days are shown"}</div></div>
+        <div class="facts"><span class="pill">Context: ${esc(data.context.day_of_week)}, month ${data.context.month}</span><span class="pill">${data.latency_ms} ms</span></div>
       </div>
-      <div class="grid">${data.recommendations.map((it, i) => itemCard(it, i + 1, true)).join("") || '<div class="empty">No recommendations</div>'}</div>`;
+      <div class="grid">${data.recommendations.map((it, i) => card(it, i + 1, { similar: true })).join("") || '<div class="empty">No recommendations</div>'}</div>`;
   } catch (e) {
     $("results").innerHTML = `<div class="error">Could not get recommendations: ${esc(e.message)}</div>`;
   }
 }
 
+function renderProfile(data, cust) {
+  const isModel = data.source === "two_tower_model";
+  const c = data.customer;
+  const facts = c ? [
+    `Age ${c.age}`, c.club_member_status, `News: ${c.fashion_news_frequency.toLowerCase()}`,
+    `${c.n_purchases.toLocaleString()} purchases`,
+    c.is_new_customer ? "No purchase history" : `Last purchase ${c.days_since_last_purchase} days before cutoff`,
+    c.has_trained_embedding ? "Personal ID embedding" : "Profile-based embedding",
+  ] : ["Not in the feature store"];
+  $("profile").innerHTML = `<div class="card profile">
+    <div class="avatar">${c ? (c.is_new_customer ? "N" : "C") : "?"}</div>
+    <div><div class="mono">${esc(data.customer_id)}</div>
+      <div class="facts">${facts.map((f) => `<span class="pill">${esc(f)}</span>`).join("")}</div></div>
+    <div class="right"><span class="badge ${isModel ? "model" : "fallback"}">${isModel ? "Two-tower model" : "Popular-items fallback"}</span></div>
+  </div>`;
+}
+
+function renderHistory(cust) {
+  const items = cust?.recent_purchases || [];
+  if (!items.length) { $("history").innerHTML = ""; return; }
+  $("history").innerHTML = `<div class="block-head"><div><h2>Recently bought</h2><div class="sub">Purchase history from the training period (what the model learned from)</div></div></div>
+    <div class="strip">${items.map((it) => card(it, null, { compact: true })).join("")}</div>`;
+}
+
 async function similar(articleId) {
-  $("similar").innerHTML = `<div class="empty">Finding similar items…</div>`;
+  const dlg = $("dlg");
+  $("dlg-content").innerHTML = `<div class="dlg-body"><div class="loading">Finding similar items…</div></div>`;
+  if (!dlg.open) dlg.showModal();
   try {
-    const data = await getJSON(`similar/${encodeURIComponent(articleId)}?k=6`);
-    $("similar").innerHTML = `
-      <div class="result-head"><div><h2>Similar to article ${esc(articleId)}</h2>
-        <div class="small">Item-to-item search on the learned article vectors</div></div>
-        <div class="meta"><span class="pill">${data.latency_ms} ms</span></div></div>
-      <div class="grid">${data.similar.map((it, i) => itemCard(it, i + 1, false)).join("")}</div>`;
-    $("similar").scrollIntoView({behavior: "smooth", block: "start"});
+    const data = await getJSON(`similar/${encodeURIComponent(articleId)}?k=12`);
+    const a = data.article;
+    $("dlg-content").innerHTML = `
+      <div class="dlg-head">${photo(a)}
+        <div><div class="small">Article ${esc(a.article_id)}</div><h2 style="margin:2px 0 4px">${esc(a.prod_name || a.product_type_name)}</h2>
+          <div class="facts"><span class="pill">${esc(a.product_type_name)}</span><span class="pill">${esc(a.colour_group_name)}</span><span class="pill">${esc(a.department_name)}</span><span class="pill">${esc(a.garment_group_name)}</span></div>
+          ${a.detail_desc ? `<p class="small" style="max-width:640px">${esc(a.detail_desc)}</p>` : ""}</div>
+        <button class="ghost close" type="button" onclick="document.getElementById('dlg').close()">Close</button></div>
+      <div class="dlg-body"><div class="block-head"><div><h2>Similar articles</h2><div class="sub">Item-to-item search on the learned article vectors · ${data.latency_ms} ms</div></div></div>
+        <div class="grid">${data.similar.map((it, i) => card(it, i + 1, { similar: true })).join("")}</div></div>`;
   } catch (e) {
-    $("similar").innerHTML = `<div class="error">Could not get similar items: ${esc(e.message)}</div>`;
+    $("dlg-content").innerHTML = `<div class="dlg-body"><div class="error">Could not get similar items: ${esc(e.message)}</div></div>`;
+  }
+}
+$("dlg").addEventListener("click", (e) => { if (e.target === $("dlg")) $("dlg").close(); });
+
+async function sample(kind) {
+  if (!state.samples) state.samples = await getJSON("sample-customers").catch(() => ({}));
+  let id;
+  if (kind === "unknown") id = "visitor-" + Math.random().toString(16).slice(2, 10);
+  else if (kind === "random") {
+    const ex = state.samples.examples || [];
+    id = ex.length ? ex[(++state.randomIndex) % ex.length] : state.samples.existing;
+  } else id = state.samples[kind];
+  if (!id) { $("results").innerHTML = `<div class="empty">No ${kind} customer loaded in the feature store.</div>`; return; }
+  $("customer").value = id;
+  recommend(id);
+}
+
+function setDate(d) {
+  state.date = d || "";
+  $("date").value = state.date;
+  document.querySelectorAll(".season").forEach((b) => b.classList.toggle("on", b.dataset.date === state.date));
+}
+
+// ------------------------------------------------------------------ model tab
+async function loadModel() {
+  try {
+    const m = await getJSON("model");
+    const tm = m.test_metrics || {};
+    const model = tm.two_tower_model || {}, base = tm.popularity_baseline || {}, only = tm.two_tower_retrieval_only;
+    const names = Object.keys(model);
+    const bar = (label, v, max, color) => `<div><span>${label}</span><span class="bar"><i style="width:${(v || 0) / max * 100}%${color ? ";background:" + color : ""}"></i></span><span>${fmt(v)}</span></div>`;
+    const cards = names.map((n) => {
+      const max = Math.max(model[n], base[n] || 0, only ? only[n] : 0) || 1;
+      const lift = base[n] ? `<span class="lift">${(model[n] / base[n]).toFixed(2)}× baseline</span>` : "";
+      return `<div class="card metric"><div class="small">${esc(n)}${only ? " · served ranking" : ""}</div><div class="val">${fmt(model[n])}</div>${lift}
+        <div class="cmp">${bar(only ? "Served" : "Two-tower", model[n], max)}
+        ${only ? bar("Tower only", only[n], max, "#c77d84") : ""}
+        ${bar("Popularity", base[n], max, "var(--muted)")}</div></div>`;
+    }).join("");
+    const rows = [
+      ["Trained", m.trained_at ? `${m.trained_at} (${m.training_minutes} min)` : "–"],
+      ["Training window", `last ${m.train_weeks} weeks before ${m.cutoff}`],
+      ["Training interactions", m.train_interactions?.toLocaleString() ?? "–"],
+      ["Test-week customers", m.test_customers?.toLocaleString() ?? "–"],
+      ["Customers / articles", `${m.n_users?.toLocaleString()} / ${m.n_items?.toLocaleString()}`],
+      ["Embedding size", m.embedding_dim], ["Batch size / learning rate", `${m.batch_size} / ${m.learning_rate}`],
+      ["Softmax temperature", m.temperature], ["Epochs (best)", `${m.epochs_run} (${m.best_epoch})`],
+      ["Served ranking", (m.repurchase_days ? `buy-again (last ${m.repurchase_days} days), then ` : "") +
+        (m.popularity_weight ? `cosine / T + ${m.popularity_weight} × log(7-day popularity)` : "cosine similarity")],
+      ["ANN (HNSW) vs exact", m.ann_benchmark ? `recall@12 ${m.ann_benchmark["recall@12_vs_exact"].toFixed(3)} · ${m.ann_benchmark.speedup.toFixed(0)}× faster` : "–"],
+    ].map(([k, v]) => `<tr><td class="small">${esc(k)}</td><td>${esc(v)}</td></tr>`).join("");
+    $("model-content").innerHTML = `<div class="metrics">${cards}</div>
+      <div class="two block"><div class="card"><div class="block-head"><h2>Training</h2></div><table>${rows}</table></div>
+      <div class="card"><div class="block-head"><h2>Loss per epoch</h2><span class="sub">in-batch softmax loss</span></div>${lossChart(m.history)}</div></div>`;
+  } catch (e) {
+    $("model-content").innerHTML = `<div class="error">${esc(e.message)}</div>`;
   }
 }
 
+function lossChart(h) {
+  if (!h || !h.train_loss?.length) return `<div class="small">No history.</div>`;
+  const W = 460, H = 220, P = 34, all = [...h.train_loss, ...h.val_loss];
+  const lo = Math.min(...all), hi = Math.max(...all), n = h.train_loss.length;
+  const x = (i) => P + (n === 1 ? (W - 2 * P) / 2 : i * (W - 2 * P) / (n - 1));
+  const y = (v) => H - P - (hi === lo ? .5 : (v - lo) / (hi - lo)) * (H - 2 * P);
+  const line = (arr, color) => `<polyline fill="none" stroke="${color}" stroke-width="2.5" points="${arr.map((v, i) => `${x(i)},${y(v)}`).join(" ")}"/>` +
+    arr.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${color}"><title>epoch ${i + 1}: ${v.toFixed(4)}</title></circle>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="training and validation loss">
+    <line x1="${P}" y1="${H - P}" x2="${W - P}" y2="${H - P}" stroke="var(--line)"/>
+    <text x="${P}" y="${P - 12}" font-size="11" fill="var(--muted)">${hi.toFixed(3)}</text>
+    <text x="${P}" y="${H - P + 16}" font-size="11" fill="var(--muted)">epoch 1</text>
+    <text x="${W - P}" y="${H - P + 16}" font-size="11" fill="var(--muted)" text-anchor="end">epoch ${n}</text>
+    ${line(h.train_loss, "var(--muted)")}${line(h.val_loss, "var(--accent)")}
+    <text x="${W - P}" y="${P - 12}" font-size="11" text-anchor="end"><tspan fill="var(--muted)">● train</tspan>  <tspan fill="var(--accent)">● validation</tspan></text>
+  </svg>`;
+}
+
+async function loadStats() {
+  const s = await getJSON("stats").catch(() => ({}));
+  const rows = Object.entries(s).map(([p, v]) => `<tr><td class="mono">${esc(p)}</td><td>${v.requests}</td><td>${v.p50_ms}</td><td>${v.p95_ms}</td><td>${v.p99_ms}</td></tr>`).join("");
+  $("stats").innerHTML = rows ? `<table><tr><th>Endpoint</th><th>Requests</th><th>p50 ms</th><th>p95 ms</th><th>p99 ms</th></tr>${rows}</table>` : `<div class="small">No requests yet.</div>`;
+}
+
+// ------------------------------------------------------------------ wiring
 $("form").addEventListener("submit", (e) => { e.preventDefault(); recommend($("customer").value.trim()); });
-document.addEventListener("click", async (e) => {
-  const s = e.target.closest("[data-sample]");
-  if (s) {
-    if (!samples) samples = await getJSON("sample-customers").catch(() => ({}));
-    const id = s.dataset.sample === "unknown" ? "unknown-customer-123" : samples[s.dataset.sample];
-    if (!id) { $("results").innerHTML = `<div class="empty">No ${s.dataset.sample} customer loaded in Redis.</div>`; return; }
-    $("customer").value = id;
-    recommend(id);
+$("date").addEventListener("change", (e) => { setDate(e.target.value); if ($("customer").value.trim()) recommend($("customer").value.trim()); });
+$("exclude").addEventListener("change", () => { if ($("customer").value.trim()) recommend($("customer").value.trim()); });
+document.addEventListener("click", (e) => {
+  const s = e.target.closest("[data-sample]"); if (s) sample(s.dataset.sample);
+  const d = e.target.closest(".season"); if (d) { setDate(d.dataset.date); if ($("customer").value.trim()) recommend($("customer").value.trim()); }
+  const sim = e.target.closest("[data-similar]"); if (sim) similar(sim.dataset.similar);
+  const t = e.target.closest("#tabs button");
+  if (t) {
+    document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("active", b === t));
+    document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.id === "view-" + t.dataset.view));
+    if (t.dataset.view === "model") loadModel();
+    if (t.dataset.view === "how") loadStats();
   }
-  const sim = e.target.closest("[data-similar]");
-  if (sim) similar(sim.dataset.similar);
 });
 
 getJSON("health").then((h) => {
-  $("status").innerHTML = `<span class="pill ${h.redis ? "ok" : "bad"}">● API ${h.status}</span>
-    <span class="pill">Redis ${h.redis ? "connected" : "down"}</span>
-    <span class="pill">${h.items_in_index.toLocaleString()} articles indexed</span>`;
+  state.health = h;
+  if (h.status === "no_model") {
+    $("status").innerHTML = `<span class="pill bad">● Model not loaded</span>`;
+    $("banner").style.display = "block";
+    $("banner").innerHTML = `<b>The API is running but no model is loaded.</b> Build the data, train the model and load the
+      feature store first (README → <i>Quick start</i>), e.g. <code>python scripts/run_pipeline.py --source path/to/kaggle.zip</code>, then restart the API.
+      <div class="small" style="margin-top:6px">${esc(h.error || "")}</div>`;
+    return;
+  }
+  $("n-items").textContent = h.items_in_index.toLocaleString();
+  $("status").innerHTML = `<span class="pill ${h.status === "ok" ? "ok" : "bad"}">● API ${esc(h.status)}</span>
+    <span class="pill">${h.feature_store === "in-memory" ? "In-memory store" : "Redis " + (h.redis ? "connected" : "down")}</span>
+    <span class="pill">${h.items_in_index.toLocaleString()} articles</span>
+    <span class="pill">${(h.customers_in_store || 0).toLocaleString()} customers</span>`;
+  const q = new URLSearchParams(location.search);
+  if (q.get("date")) setDate(q.get("date")); else setDate("");
+  if (q.get("customer")) { $("customer").value = q.get("customer"); recommend(q.get("customer")); }
 }).catch(() => { $("status").innerHTML = `<span class="pill bad">● API unreachable</span>`; });
 </script>
 </body>

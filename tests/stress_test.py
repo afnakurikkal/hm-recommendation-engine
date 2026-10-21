@@ -6,6 +6,7 @@ store, plus some unknown ones) and reports throughput and latency percentiles.
 Run (API + Redis must be running):  python -m tests.stress_test
 Options: API_URL, STRESS_LEVELS (e.g. "1,10,50"), STRESS_REQUESTS (per level).
 """
+import json
 import os
 import random
 import threading
@@ -22,13 +23,18 @@ REQUESTS_PER_LEVEL = int(os.environ.get("STRESS_REQUESTS", 500))
 
 
 def sample_customers(n=2000):
-    r = redis.Redis(host=os.environ.get("REDIS_HOST", "localhost"), port=int(os.environ.get("REDIS_PORT", 6379)))
+    """Real customers from the Redis feature store (or the API's examples) + ~10% unknown ones."""
     ids = []
-    for key in r.scan_iter("user:*", count=5000):
-        ids.append(key.decode().split(":", 1)[1])
-        if len(ids) >= n:
-            break
-    return ids + [f"unknown-customer-{i}" for i in range(len(ids) // 10)]   # ~10% cold-start
+    try:
+        r = redis.Redis.from_url(os.environ.get("REDIS_URL", "redis://localhost:6379/0"), socket_connect_timeout=3)
+        for key in r.scan_iter("user:*", count=5000):
+            ids.append(key.decode().split(":", 1)[1])
+            if len(ids) >= n:
+                break
+    except redis.RedisError:
+        samples = requests.get(f"{API_URL}/sample-customers", timeout=60).json()
+        ids = [samples["existing"], *samples.get("examples", [])] + ([samples["new"]] if samples.get("new") else [])
+    return ids + [f"unknown-customer-{i}" for i in range(max(1, len(ids) // 10))]   # ~10% cold-start
 
 
 def run_level(concurrency, customers):
@@ -73,6 +79,11 @@ def main():
         rows.append(row)
         print(f"{row['concurrency']:>6} {row['requests']:>9} {row['errors']:>7} {row['throughput_rps']:>8.1f} "
               f"{row['p50_ms']:>8.1f} {row['p95_ms']:>8.1f} {row['p99_ms']:>8.1f}")
+    out = os.environ.get("STRESS_OUTPUT", os.path.join("artifacts", "stress_test_results.json"))
+    if os.path.isdir(os.path.dirname(out) or "."):
+        with open(out, "w") as f:
+            json.dump({"api_url": API_URL, "run_at": time.strftime("%Y-%m-%d %H:%M:%S"), "levels": rows}, f, indent=2)
+        print("\nresults saved to", out)
     return rows
 
 
