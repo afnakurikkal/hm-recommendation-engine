@@ -1,25 +1,30 @@
+
 # Kaggle credentials
 kaggle.json
 **/kaggle.json
 
 # Environment variables
 .env
+.env.*
 
-# Dataset files
-data/
-datasets/
+# Raw datasets
+/data/
+/datasets/
 *.zip
-*.csv
 
 # Python cache
 __pycache__/
-*.pyc
+*.py[cod]
 
 # Jupyter
 .ipynb_checkpoints/
 
-# Model artifacts
+# Model weights and checkpoints
 *.keras
 *.h5
 *.weights.h5
 checkpoints/
+
+# Virtual environments
+.venv/
+venv/

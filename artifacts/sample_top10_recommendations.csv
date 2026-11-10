@@ -1,0 +1,11 @@
+recommendation_rank,article_id,product_type_name,product_group_name,colour_group_name,department_name,garment_group_name,similarity_score
+1,0526840005,Shirt,Garment Upper body,Dark Turquoise,Shirt,Shirts,0.6178065
+2,0594879002,Shirt,Garment Upper body,Blue,Young Boy Shirt,Shirts,0.6063205
+3,0893405001,Shirt,Garment Upper body,Blue,Kids Boy Shirt,Shirts,0.6054901
+4,0890384001,Shirt,Garment Upper body,Blue,Baby Boy Woven,Woven/Jersey/Knitted mix Baby,0.5796108
+5,0743840012,Shirt,Garment Upper body,Dark Green,Shirt,Shirts,0.5745582
+6,0789407001,Blazer,Garment Upper body,Dark Blue,Blazer S&T,Dressed,0.57224405
+7,0660009004,Shirt,Garment Upper body,Dark Blue,Shirt,Shirts,0.5708744
+8,0770179001,Jacket,Garment Upper body,Dark Red,Jacket Casual,Outdoor,0.566595
+9,0656853002,Jacket,Garment Upper body,Dark Red,Young Girl Outdoor,Outdoor,0.5653343
+10,0633862002,Jacket,Garment Upper body,Dark Grey,Ladies Sport Woven,Unknown,0.5604256
