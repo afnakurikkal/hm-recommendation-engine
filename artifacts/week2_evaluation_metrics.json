@@ -1,0 +1,19 @@
+{
+    "project": "ZAALIMA Project-02",
+    "model": "Context-Aware Two-Tower Neural Recommendation Engine",
+    "dataset": "H&M Personalized Fashion Recommendations (Kaggle)",
+    "interaction_sample_size": 24833,
+    "training_interactions": 22349,
+    "validation_interactions": 2484,
+    "catalogue_articles": 105542,
+    "embedding_dimension": 32,
+    "training_epochs": 3,
+    "negative_sampling": "In-batch negatives with multi-positive contrastive loss",
+    "evaluation": "Full article catalogue; training-seen items excluded per customer",
+    "metrics": {
+        "Recall@5": 0.0,
+        "Recall@10": 0.00041203131437989287,
+        "NDCG@5": 0.0,
+        "NDCG@10": 0.00013734377145996427
+    }
+}
