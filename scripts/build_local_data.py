@@ -8,7 +8,7 @@ Kaggle download directly - the 30 GB zip does not need to be extracted.
     python scripts/build_local_data.py --source path/to/h-and-m-personalized-fashion-recommendations.zip
 
 `--source` can also be a folder containing articles.csv, customers.csv and
-transactions_train.csv. Output goes to HM_DATA_PATH (default: data/hm_project).
+transactions_train.csv (or the single-file downloads articles.csv.zip, ...). Output goes to HM_DATA_PATH (default: data/hm_project).
 
 Extra files (used by the API / web UI, not by the model):
   article_details.parquet  product name, description, group, section ...
@@ -48,7 +48,10 @@ class RawData:
     def open(self, name):
         if self.zip:
             return self.zip.open(name)
-        return open(self.source / name, "rb")
+        if (self.source / name).exists():
+            return open(self.source / name, "rb")
+        # single-file Kaggle downloads arrive as  <name>.zip  (e.g. transactions_train.csv.zip)
+        return zipfile.ZipFile(self.source / f"{name}.zip").open(name)
 
     def has_images(self):
         if self.zip:

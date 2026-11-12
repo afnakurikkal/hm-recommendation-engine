@@ -68,7 +68,10 @@ def find_images_source():
     if not source and info_file.exists():
         source = json.loads(info_file.read_text()).get("images_source")
     if not source or not Path(source).exists():
-        return None
+        bundled = Path(config.DATA_PATH) / "images"          # thumbnails shipped in the ready-to-run bundle
+        if not bundled.is_dir():
+            return None
+        source = str(bundled)
     if Path(source).is_file():
         return {"zip": zipfile.ZipFile(source), "lock": threading.Lock()}
     folder = Path(source) / "images" if (Path(source) / "images").is_dir() else Path(source)

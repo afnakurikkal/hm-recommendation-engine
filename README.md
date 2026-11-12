@@ -10,6 +10,74 @@ milliseconds** through a **Redis feature store**, **FAISS approximate nearest-ne
 
 ![Web UI](docs/web_ui.png)
 
+## Run the project in about 15 minutes (no training needed)
+
+This uses the **already-trained model** and the processed data, so there's no 30 GB Kaggle download
+and no 1-hour training. To rebuild everything from the raw data instead, see
+[Full pipeline from the raw Kaggle data](#full-pipeline-from-the-raw-kaggle-data).
+
+**You need:** [Python 3.10–3.13](https://www.python.org/downloads/), [Git](https://git-scm.com/downloads),
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) (started and running), 8 GB RAM, 5 GB free disk.
+No Docker? See the note under step 4.
+
+The commands are for **Windows PowerShell**. On macOS / Linux, use `.venv/bin/python` instead of
+`.venv\Scripts\python` and `unzip` instead of `Expand-Archive`.
+
+**1. Get the code and install the packages** (5–10 min, mostly TensorFlow)
+```powershell
+git clone https://github.com/afnakurikkal/hm-recommendation-engine.git
+cd hm-recommendation-engine
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements.txt
+```
+
+**2. Download the trained model + data** (444 MB zip):
+**[hm_ready_to_run.zip — Google Drive](https://drive.google.com/file/d/1z4RSfg7c_Y6rV-bYIfacI5ji1YaxXD8o/view?usp=sharing)**
+
+Save it in the `hm-recommendation-engine` folder, then unzip it into `data`:
+```powershell
+Expand-Archive hm_ready_to_run.zip -DestinationPath data
+```
+Check: the file `data\hm_project\week2_model\model_config.json` must exist.
+
+**3. Start Redis and load the feature store** (~2 min, loads 1.37M customers + 105k articles)
+```powershell
+docker compose up -d redis
+.venv\Scripts\python scripts\run_pipeline.py --steps store
+```
+
+**4. Start the API**
+```powershell
+.venv\Scripts\python -m uvicorn src.api.main:app --port 8000
+```
+Wait for `Application startup complete`, then open **http://localhost:8000** (web UI) and
+**http://localhost:8000/docs** (interactive API docs).
+
+> **No Docker?** Skip step 3 and start the API with an in-memory feature store (100,000 customers):
+> ```powershell
+> $env:REDIS_URL="memory://"; $env:HM_MAX_USERS="100000"; .venv\Scripts\python -m uvicorn src.api.main:app --port 8000
+> ```
+> If port 8000 is busy, use `--port 8080` and open http://localhost:8080.
+
+**5. Things to try in the web UI**
+1. Click **Loyal customer**. You see the customer profile, what they bought, and 12 recommendations
+   with product photos. The first ones are "Buy again" picks, the rest come from the two-tower model.
+2. Click **Christmas**, then **Summer**. The model's picks change with the season (context-aware).
+3. Click **New customer (no purchases)** and **Unknown visitor** to see the cold-start handling.
+4. Click **Similar items** on any article (item-to-item search on the learned vectors).
+5. Open the **Model & metrics** tab (test results vs baseline, loss curve) and **How it works** (live latency).
+
+**6. Run the tests** (in a second PowerShell window, from the same folder, while the API is running)
+```powershell
+.venv\Scripts\python -m pytest -v
+.venv\Scripts\python -m tests.stress_test
+```
+The first command runs the 17 end-to-end tests (synthetic data) and the 11 live tests against the
+running API. The second sends 2,000 concurrent requests and prints throughput and p50 / p95 / p99 latency.
+
+Product photos: the bundle contains thumbnails of the 6,000 most popular articles. Other articles
+show a colour swatch, unless the full Kaggle zip is available (`$env:HM_IMAGES="path\to\the\kaggle.zip"`).
+
 ## Results
 
 Trained on the last 12 weeks of real H&M transactions. Evaluated on the **held-out last week**
@@ -105,9 +173,12 @@ new articles.
 
 ---
 
-## Quick start (local machine: Windows, macOS or Linux)
+## Full pipeline from the raw Kaggle data
 
-**You need:** Python 3.10–3.13, about 8 GB RAM, 5 GB free disk, and [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+Rebuilds everything the ready-to-run bundle contains: features, training, ranking, index and feature
+store. It takes about 1 hour on a laptop CPU.
+
+**You need:** Python 3.10–3.13, about 8 GB RAM, 10 GB free disk, and [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 for Redis (optional, see step 4).
 
 ### 1. Install
@@ -131,10 +202,16 @@ FAISS index, feature store and every API endpoint (17 tests).
 Download the dataset from the [Kaggle competition page](https://www.kaggle.com/competitions/h-and-m-personalized-fashion-recommendations/data)
 ("Download All", accept the competition rules first), or with the Kaggle CLI:
 ```bash
+# everything incl. product photos (30 GB):
 kaggle competitions download -c h-and-m-personalized-fashion-recommendations
+# or only the 3 CSV files the pipeline needs (much smaller, no photos):
+mkdir hm_raw
+kaggle competitions download -c h-and-m-personalized-fashion-recommendations -f articles.csv -p hm_raw
+kaggle competitions download -c h-and-m-personalized-fashion-recommendations -f customers.csv -p hm_raw
+kaggle competitions download -c h-and-m-personalized-fashion-recommendations -f transactions_train.csv -p hm_raw
 ```
-Then run the whole offline pipeline with one command. Leave the zip as it is: it is read directly,
-and the product photos inside it are used by the web UI.
+Then run the whole offline pipeline with one command. `--source` is the big zip (leave it as it is: it
+is read directly, and its product photos are used by the web UI) or the `hm_raw` folder.
 ```bash
 docker compose up -d redis
 python scripts/run_pipeline.py --source path/to/h-and-m-personalized-fashion-recommendations.zip
@@ -253,7 +330,7 @@ src/training/          Week 2 training + evaluation script (Airflow task)
 src/serving/           Week 3 FAISS index, Redis feature store, daily embedding refresh
 src/api/               Week 4 FastAPI service + web UI (static/index.html)
 dags/                  Week 4 Airflow DAGs
-scripts/               One-command pipeline, local DuckDB feature build, synthetic test data
+scripts/               One-command pipeline, local DuckDB feature build, ready-to-run bundle, synthetic test data
 tests/                 End-to-end tests (synthetic), live API tests, load test
 notebooks/             Colab notebooks: Week 1 features, Week 2 model, Week 3+4 serving demo
 artifacts/             Evaluation report, metrics, training history, load test results
