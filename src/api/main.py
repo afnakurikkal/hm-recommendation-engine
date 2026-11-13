@@ -6,7 +6,7 @@ import faiss
 import redis
 
 from fastapi import FastAPI, HTTPException, Query
-
+from recommendation import generate_recommendations
 # --------------------------------------------------
 # 1. FILE PATHS
 # --------------------------------------------------
@@ -100,62 +100,21 @@ def recommend(
 ):
 
     # Find customer transaction history
-
-    history = transactions[
-        transactions["customer_id"] == customer_id
-    ]
-
-    if history.empty:
-
-        raise HTTPException(
-            status_code=404,
-            detail="Customer not found"
-        )
-
-    # Get unique purchased articles
-
-    purchased_ids = set(history["article_id"])
-
-    # Match purchased articles with available embeddings
-
-    matched_ids = purchased_ids.intersection(item_index)
-
-    if not matched_ids:
-
-        raise HTTPException(
-            status_code=422,
-            detail="No purchased articles have embeddings"
-        )
-
-    # Generate customer preference vector
-
-    purchase_vectors = np.array([
-        item_embeddings[item_index[article_id]]
-        for article_id in matched_ids
-    ])
-
-    customer_vector = purchase_vectors.mean(axis=0)
-
-    customer_vector = customer_vector.astype("float32")
-
-    norm = np.linalg.norm(customer_vector)
-
-    if norm == 0:
-
-        raise HTTPException(
-            status_code=422,
-            detail="Invalid customer preference vector"
-        )
-
-    customer_vector /= norm
-
-    # Search similar products using FAISS HNSW
-
-    query_vector = customer_vector.reshape(1, -1)
-
-    search_k = min(k + len(purchased_ids), hnsw.ntotal)
-
-    recommendations = []
+    try:
+    recommendations = generate_recommendations(
+        customer_id=customer_id,
+        transactions=transactions,
+        item_embeddings=item_embeddings,
+        item_ids=item_ids,
+        item_index=item_index,
+        hnsw=hnsw,
+        k=k
+    )
+except ValueError as e:
+    raise HTTPException(
+        status_code=404,
+        detail=str(e)
+    )
 
     while True:
 
