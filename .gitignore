@@ -3,8 +3,8 @@
 !artifacts/*.csv
 *.zip
 *.parquet
-data/
-datasets/
+/data/
+/datasets/
 
 # Model weights and checkpoints (stay in Google Drive)
 *.h5
