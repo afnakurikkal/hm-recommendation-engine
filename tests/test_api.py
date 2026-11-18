@@ -60,5 +60,16 @@ def test_similar_items():
     assert article_id not in [item["article_id"] for item in data["similar"]]
 
 
+def test_frontend_page():
+    response = requests.get(f"{API_URL}/ui", timeout=30)
+    assert response.status_code == 200
+    assert "Recommend" in response.text
+
+
+def test_sample_customers():
+    data = requests.get(f"{API_URL}/sample-customers", timeout=30).json()
+    assert "existing" in data
+
+
 def test_bad_k_is_rejected():
     assert requests.get(f"{API_URL}/recommend/x", params={"k": 0}, timeout=30).status_code == 422
