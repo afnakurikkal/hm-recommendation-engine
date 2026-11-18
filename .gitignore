@@ -1,17 +1,27 @@
 # Data files (these stay in Google Drive, never in git)
 *.csv
+!artifacts/*.csv
 *.zip
 *.parquet
-data/
+/data/
+/datasets/
+
+# Model weights and checkpoints (stay in Google Drive)
+*.h5
+*.keras
+*.npy
+checkpoints/
 
 # Secrets
 kaggle.json
+**/kaggle.json
 .kaggle/
 .env
+.env.*
 
 # Python / Jupyter
 __pycache__/
-*.pyc
+*.py[cod]
 .ipynb_checkpoints/
 venv/
 .venv/
