@@ -19,12 +19,15 @@ import numpy as np
 import redis
 import tensorflow as tf
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import HTMLResponse
+from pathlib import Path
 
 from src import config
 from src.data.features import context_features
 from src.models.loader import load_model_config, load_query_tower
 
 STATE = {}
+UI_FILE = Path(__file__).parent / "static" / "index.html"
 
 
 def load_index():
@@ -95,7 +98,8 @@ def popular_items(k):
 
 @app.get("/")
 def home():
-    return {"message": "H&M Recommendation API is running!", "status": "success", "docs": "/docs"}
+    return {"message": "H&M Recommendation API is running!", "status": "success",
+            "frontend": "/ui", "docs": "/docs"}
 
 
 @app.get("/health")
@@ -159,6 +163,24 @@ def similar(article_id: str, k: int = Query(default=12, ge=1, le=100)):
         "similar": item_details(article_ids),
         "latency_ms": round((time.perf_counter() - started) * 1000, 2),
     }
+
+
+@app.get("/ui", response_class=HTMLResponse, include_in_schema=False)
+def ui():
+    """Web frontend (single page that calls this API)."""
+    return HTMLResponse(UI_FILE.read_text(encoding="utf-8"))
+
+
+@app.get("/sample-customers")
+def sample_customers():
+    """One customer with purchase history and one without, for demos."""
+    found = {}
+    for key in STATE["redis"].scan_iter("user:*", count=1000):
+        kind = "new" if STATE["redis"].hget(key, "is_new_user") == b"1" else "existing"
+        found.setdefault(kind, key.decode().split(":", 1)[1])
+        if len(found) == 2:
+            break
+    return found
 
 
 @app.post("/admin/reload")

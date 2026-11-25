@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>H&amp;M Recommendations</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1f; --muted: #6b6b70; --line: #e4e2dc;
+    --accent: #cc0000; --accent-ink: #ffffff; --ok: #1f7a4d; --warn: #a15c00; --chip: #f0eee9;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background: var(--panel); border-bottom: 1px solid var(--line); }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+  .logo { background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 3px 8px; font-weight: 800; letter-spacing: .5px; }
+  .status { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+  .pill { background: var(--chip); border-radius: 999px; padding: 4px 10px; color: var(--muted); }
+  .pill.ok { color: var(--ok); } .pill.bad { color: var(--accent); }
+  main { padding: 24px 0 48px; }
+  h1 { font-size: 26px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 20px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  input[type=text] { flex: 1 1 360px; min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+  select { padding: 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: #fff; }
+  button { cursor: pointer; border: 0; border-radius: 8px; padding: 11px 16px; font: inherit; font-weight: 600; }
+  .primary { background: var(--accent); color: var(--accent-ink); }
+  .ghost { background: var(--chip); color: var(--ink); font-weight: 500; padding: 7px 12px; font-size: 13px; }
+  .samples { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; color: var(--muted); font-size: 13px; }
+  .result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin: 24px 0 12px; }
+  .result-head h2 { margin: 0; font-size: 19px; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+  .badge { border-radius: 6px; padding: 3px 8px; font-weight: 600; font-size: 12px; }
+  .badge.model { background: #e7f3ec; color: var(--ok); }
+  .badge.fallback { background: #fff1de; color: var(--warn); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .item { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .swatch { height: 64px; border-radius: 8px; border: 1px solid var(--line); display: flex; align-items: flex-end; justify-content: space-between; padding: 6px 8px; }
+  .rank { background: rgba(255,255,255,.9); border-radius: 6px; padding: 1px 7px; font-weight: 700; font-size: 12px; }
+  .ptype { font-weight: 700; }
+  .small { color: var(--muted); font-size: 13px; }
+  .aid { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--muted); }
+  .item button { margin-top: auto; }
+  .empty, .error { color: var(--muted); padding: 24px; text-align: center; }
+  .error { color: var(--accent); }
+  .how { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; font-size: 13px; }
+  .step b { display: block; margin-bottom: 2px; font-size: 14px; }
+  footer { color: var(--muted); font-size: 13px; padding: 24px 0; border-top: 1px solid var(--line); }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <div class="brand"><span class="logo">H&amp;M</span> Context-Aware Recommendation Engine</div>
+    <div class="status" id="status"><span class="pill">Connecting…</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Personalized fashion recommendations</h1>
+  <p class="sub">Two-tower neural network · Redis feature store · FAISS approximate nearest-neighbour search · FastAPI</p>
+
+  <div class="card">
+    <form id="form">
+      <input id="customer" type="text" placeholder="Enter a customer ID" autocomplete="off" required>
+      <select id="k" aria-label="Number of recommendations">
+        <option value="6">Top 6</option><option value="12" selected>Top 12</option><option value="24">Top 24</option>
+      </select>
+      <button class="primary" type="submit">Recommend</button>
+    </form>
+    <div class="samples">Try:
+      <button class="ghost" type="button" data-sample="existing">Existing customer</button>
+      <button class="ghost" type="button" data-sample="new">New customer (no purchases)</button>
+      <button class="ghost" type="button" data-sample="unknown">Unknown customer</button>
+    </div>
+  </div>
+
+  <section id="results"></section>
+  <section id="similar"></section>
+
+  <div class="how">
+    <div class="step"><b>1 · Feature store</b>Customer profile and purchase features are read from Redis.</div>
+    <div class="step"><b>2 · Query tower</b>The neural network turns them, plus month and day of week, into a customer vector.</div>
+    <div class="step"><b>3 · ANN search</b>FAISS HNSW finds the closest of 105,542 article vectors.</div>
+    <div class="step"><b>4 · Cold start</b>Unknown customers get the most popular articles.</div>
+  </div>
+</main>
+
+<footer class="wrap">Backend API: <a href="docs" target="_blank">interactive API docs</a> · <a href="health" target="_blank">health</a></footer>
+
+<script>
+const COLOURS = {
+  "Black": "#1b1b1b", "White": "#fafafa", "Off White": "#f3efe6", "Light Beige": "#e9dcc6", "Beige": "#d8c3a0",
+  "Dark Beige": "#b59a72", "Grey": "#9a9a9a", "Light Grey": "#cfcfcf", "Dark Grey": "#4a4a4a", "Greyish Beige": "#bdb3a2",
+  "Blue": "#2f62c9", "Light Blue": "#9cc3ea", "Dark Blue": "#1d2f5c", "Other Blue": "#4c74b3", "Turquoise": "#2fb3b3",
+  "Dark Turquoise": "#1c7c7c", "Light Turquoise": "#9fe0dc", "Green": "#3d8b46", "Dark Green": "#1f4d2b", "Light Green": "#a8d5a2",
+  "Greenish Khaki": "#8a8a55", "Khaki green": "#77784a", "Yellowish Green": "#b5c845", "Red": "#c8202b", "Dark Red": "#7a1a22",
+  "Light Red": "#ef8a8a", "Pink": "#e88fb1", "Light Pink": "#f6cfdc", "Dark Pink": "#b8346a", "Other Pink": "#d86b97",
+  "Orange": "#ef7d22", "Dark Orange": "#b3561a", "Light Orange": "#f7b779", "Yellow": "#f2cf2b", "Dark Yellow": "#c9a21b",
+  "Light Yellow": "#f8eaa0", "Mole": "#6e6157", "Brown": "#6b4329", "Yellowish Brown": "#9b6b2f", "Purple": "#6c3d8f",
+  "Dark Purple": "#43245c", "Light Purple": "#c3a7dc", "Lilac Purple": "#b38fd0", "Gold": "#c9a24b", "Silver": "#c0c0c0",
+  "Bronze/Copper": "#a8683a", "Metal": "#8e9196", "Transparent": "#eef3f6", "Light Orange ": "#f7b779"
+};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let samples = null;
+
+async function getJSON(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || res.statusText);
+  return res.json();
+}
+
+function itemCard(item, rank, withSimilar) {
+  const colour = COLOURS[item.colour_group_name] || "#d9d6cf";
+  return `<div class="item">
+    <div class="swatch" style="background:${colour}"><span class="rank">#${rank}</span></div>
+    <div class="ptype">${esc(item.product_type_name || "Article")}</div>
+    <div class="small">${esc(item.colour_group_name)} · ${esc(item.department_name)}</div>
+    <div class="small">${esc(item.garment_group_name)}</div>
+    <div class="aid">Article ${esc(item.article_id)}</div>
+    ${withSimilar ? `<button class="ghost" type="button" data-similar="${esc(item.article_id)}">Similar items</button>` : ""}
+  </div>`;
+}
+
+async function recommend(customerId) {
+  const k = $("k").value;
+  $("similar").innerHTML = "";
+  $("results").innerHTML = `<div class="empty">Finding recommendations…</div>`;
+  try {
+    const data = await getJSON(`recommend/${encodeURIComponent(customerId)}?k=${k}`);
+    const isModel = data.source === "two_tower_model";
+    const c = data.customer;
+    const profile = c ? `<span class="pill">Age ${c.age}</span><span class="pill">${esc(c.club_member_status)}</span>
+        <span class="pill">${c.n_purchases} past purchases</span>${c.is_new_customer ? '<span class="pill">New customer</span>' : ""}` : "";
+    $("results").innerHTML = `
+      <div class="result-head">
+        <div><h2>Recommended for this customer</h2><div class="aid">${esc(customerId)}</div></div>
+        <div class="meta">
+          <span class="badge ${isModel ? "model" : "fallback"}">${isModel ? "Two-tower model" : "Popular items (cold start)"}</span>
+          ${profile}<span class="pill">${data.latency_ms} ms</span>
+        </div>
+      </div>
+      <div class="grid">${data.recommendations.map((it, i) => itemCard(it, i + 1, true)).join("") || '<div class="empty">No recommendations</div>'}</div>`;
+  } catch (e) {
+    $("results").innerHTML = `<div class="error">Could not get recommendations: ${esc(e.message)}</div>`;
+  }
+}
+
+async function similar(articleId) {
+  $("similar").innerHTML = `<div class="empty">Finding similar items…</div>`;
+  try {
+    const data = await getJSON(`similar/${encodeURIComponent(articleId)}?k=6`);
+    $("similar").innerHTML = `
+      <div class="result-head"><div><h2>Similar to article ${esc(articleId)}</h2>
+        <div class="small">Item-to-item search on the learned article vectors</div></div>
+        <div class="meta"><span class="pill">${data.latency_ms} ms</span></div></div>
+      <div class="grid">${data.similar.map((it, i) => itemCard(it, i + 1, false)).join("")}</div>`;
+    $("similar").scrollIntoView({behavior: "smooth", block: "start"});
+  } catch (e) {
+    $("similar").innerHTML = `<div class="error">Could not get similar items: ${esc(e.message)}</div>`;
+  }
+}
+
+$("form").addEventListener("submit", (e) => { e.preventDefault(); recommend($("customer").value.trim()); });
+document.addEventListener("click", async (e) => {
+  const s = e.target.closest("[data-sample]");
+  if (s) {
+    if (!samples) samples = await getJSON("sample-customers").catch(() => ({}));
+    const id = s.dataset.sample === "unknown" ? "unknown-customer-123" : samples[s.dataset.sample];
+    if (!id) { $("results").innerHTML = `<div class="empty">No ${s.dataset.sample} customer loaded in Redis.</div>`; return; }
+    $("customer").value = id;
+    recommend(id);
+  }
+  const sim = e.target.closest("[data-similar]");
+  if (sim) similar(sim.dataset.similar);
+});
+
+getJSON("health").then((h) => {
+  $("status").innerHTML = `<span class="pill ${h.redis ? "ok" : "bad"}">● API ${h.status}</span>
+    <span class="pill">Redis ${h.redis ? "connected" : "down"}</span>
+    <span class="pill">${h.items_in_index.toLocaleString()} articles indexed</span>`;
+}).catch(() => { $("status").innerHTML = `<span class="pill bad">● API unreachable</span>`; });
+</script>
+</body>
+</html>
